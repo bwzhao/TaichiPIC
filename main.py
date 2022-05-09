@@ -12,7 +12,7 @@ from field_func import *
 from helper_func import *
 
 
-ti.init(arch=ti.gpu)
+ti.init(arch=ti.vulkan)
 
 ########################################################################################################################
 """
@@ -31,6 +31,10 @@ u_p = ti.Vector.field(3, dtype=float, shape=n_ptc) # ions
 # Weight of the macro-particles
 wght_e = ti.field(dtype=float, shape=n_ptc)  # electrons
 wght_p = ti.field(dtype=float, shape=n_ptc)  # ions
+
+# For illustration
+colors_e = ti.Vector.field(4, dtype=float, shape=n_ptc)
+colors_p = ti.Vector.field(4, dtype=float, shape=n_ptc)
 
 # Field
 B_yee = ti.Vector.field(3, dtype=float, shape=(n_cellx, n_celly))   # Magnetic on Yee lattice
@@ -65,6 +69,9 @@ def initiate():
 
         wght_e[idx_ptc] = n0 * (xmax - xmin) * (ymax - ymin) / n_ptc
         wght_p[idx_ptc] = n0 * (xmax - xmin) * (ymax - ymin) / n_ptc
+
+        colors_e[idx_ptc] = ti.Vector([1., 0., 0., 1.])
+        colors_p[idx_ptc] = ti.Vector([0., 0., 1., 1.])
 
     # pos_e[0] = [xmin + 0.4 * (xmax - xmin), ymin + 0.4 * (ymax - ymin), 0.]
     # pos_p[0] = [xmin + 0.6 * (xmax - xmin), ymin + 0.6 * (ymax - ymin), 0.]
@@ -113,46 +120,50 @@ def update():
     push_bhalf(B_yee, E_yee)
 
 
-def illustratio_init():
-    gui_1 = ti.GUI("Taichi PIC Particles", res=512, background_color=0x112F41)
+def gui_init():
+    window = ti.ui.Window("Taichi PIC Particles", res=(512, 512), vsync=True)
 
-    gui_2 = ti.GUI("Taichi PIC E-Fields", res=(n_cellx, n_celly))
-    gui_3 = ti.GUI("Taichi PIC B-Fields", res=(n_cellx, n_celly))
+    canvas = window.get_canvas()
+    scene = ti.ui.Scene()
+    camera = ti.ui.make_camera()
+    camera.position(0.5, 1.0, 1.95)
+    camera.lookat(0.5, 0.3, 0.5)
+    camera.fov(55)
 
-    return gui_1, gui_2, gui_3
+    return window, canvas, scene, camera
 
 
-def illustration_update():
+def gui_update(window, canvas, scene, camera):
+    camera.track_user_inputs(window, movement_speed=0.03, hold_key=ti.ui.RMB)
+    scene.set_camera(camera)
+
+    scene.ambient_light((0, 0, 0))
+    particles_radius = 0.1
+
     # Electrons
-    gui_1.circles(pos_e.to_numpy()[:, 0:2] / (xmax - xmin),
-                radius=3, color=0x068587)
-    # Ions
-    gui_1.circles(pos_p.to_numpy()[:, 0:2] / (xmax - xmin),
-                radius=3, color=0xED553B)
+    show_field = ti.Vector.field(2, float, shape=n_ptc)
+    show_field.from_numpy(pos_e.to_numpy()[:, 0:2] / (xmax - xmin))
+    scene.particles(show_field, per_vertex_color=colors_e, radius=particles_radius)
 
-    # Electric field
-    array_E = E_grid.to_numpy()
-    gui_2.set_image((array_E - array_E.min()) / (array_E.max() - array_E.min()))
+    scene.point_light(pos=(0.5, 1.5, 0.5), color=(0.5, 0.5, 0.5))
+    scene.point_light(pos=(0.5, 1.5, 1.5), color=(0.5, 0.5, 0.5))
 
-    # Magnetirc field
-    array_B = B_grid.to_numpy()
-    gui_3.set_image((array_B - array_B.min()) / (array_B.max() - array_B.min()))
+    canvas.scene(scene)
 
-    gui_1.show()
-    gui_2.show()
-    gui_3.show()
+    window.show()
 ########################################################################################################################
 
 
 if __name__ == '__main__':
-    gui_1, gui_2, gui_3= illustratio_init()
+    window, canvas, scene, camera = gui_init()
     initiate()
     initial_push(-1., me, pos_e, u_e, E_grid, B_grid)
     initial_push(1., me, pos_p, u_p, E_grid, B_grid)
 
     for frame in range(10000):
         update()
-        illustration_update()
+        if frame % 5 == 0:
+            gui_update(window, canvas, scene, camera)
 
 
 
