@@ -12,7 +12,7 @@ from field_func import *
 from helper_func import *
 
 
-ti.init(arch=ti.cpu)
+ti.init(arch=ti.gpu)
 
 ########################################################################################################################
 """
@@ -57,20 +57,20 @@ def initiate():
     """
     # Particle spatial dim
     for idx_ptc in range(n_ptc):
-        # pos_e[idx_ptc] = [xmin + 0.4 * (xmax - xmin), ymin + 0.5 * (ymax - ymin), 0.]
-        # pos_p[idx_ptc] = [xmin + 0.6 * (xmax - xmin), ymin + 0.5 * (ymax - ymin), 0.]
-        #
-        # u_e[idx_ptc] = [0.99, 0, 0]
-        # u_p[idx_ptc] = [-0.99, 0, 0]
+        pos_e[idx_ptc] = [xmin + ti.random() * (xmax - xmin), ymin + ti.random() * (ymax - ymin), 0.]
+        pos_p[idx_ptc] = [xmin + ti.random() * (xmax - xmin), ymin + ti.random() * (ymax - ymin), 0.]
+
+        u_e[idx_ptc] = [(ti.random() - 0.5) * 2, (ti.random() - 0.5) * 2, 0]
+        u_p[idx_ptc] = [(ti.random() - 0.5) * 2, (ti.random() - 0.5) * 2, 0]
 
         wght_e[idx_ptc] = n0 * (xmax - xmin) * (ymax - ymin) / n_ptc
         wght_p[idx_ptc] = n0 * (xmax - xmin) * (ymax - ymin) / n_ptc
 
-    pos_e[0] = [xmin + 0.4 * (xmax - xmin), ymin + 0.4 * (ymax - ymin), 0.]
-    pos_p[0] = [xmin + 0.6 * (xmax - xmin), ymin + 0.6 * (ymax - ymin), 0.]
-
-    u_e[0] = [0, 0, 0]
-    u_p[0] = [0, 0, 0]
+    # pos_e[0] = [xmin + 0.4 * (xmax - xmin), ymin + 0.4 * (ymax - ymin), 0.]
+    # pos_p[0] = [xmin + 0.6 * (xmax - xmin), ymin + 0.6 * (ymax - ymin), 0.]
+    #
+    # u_e[0] = [0, 0.99, 0]
+    # u_p[0] = [0, -0.99, 0]
 
 
     # Fields:

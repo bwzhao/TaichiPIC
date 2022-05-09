@@ -4,11 +4,11 @@ import math
 ########################################################################################################################
 # Parameters
 # Particles
-n_ptc = 1
+n_ptc = 10000
 
 # Setup for the grid
 n_cellx, n_celly = 512, 512
-xmin, xmax, ymin, ymax = 0., 1., 0., 1.   # Spatial region
+xmin, xmax, ymin, ymax = 0., 100., 0., 100.   # Spatial region
 pos_ori = [xmin, ymin]
 dx, dy = (xmax - xmin) / n_cellx, (ymax - ymin) / n_celly   # Spatial step
 inv_dx, inv_dy = 1. / dx, 1. / dy   # Inverse dx and dy
