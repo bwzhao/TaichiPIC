@@ -4,7 +4,7 @@ import math
 # Speed of light [cm/s]
 c = 299792458e2
 # Fundamental charge [esu]
-e = 4.8032068e-10
+e = 4.8032068e-10 * 1e10
 # Boltzmann constant [erg/K]
 k = 1.380658e-16
 # Planck constant [erg.s]

@@ -76,8 +76,8 @@ def j_grid2yee(
     Transfer J from grid to yee lattice
     """
     for i, j in J_grid:
-        j_p = j + 1 if j != n_celly - 1 else 0
         i_p = i + 1 if i != n_cellx - 1 else 0
+        j_p = j + 1 if j != n_celly - 1 else 0
 
         Jx = (J_grid[i, j][0] + J_grid[i_p, j][0]) / 2.
         Jy = (J_grid[i, j][1] + J_grid[i, j_p][1]) / 2.
@@ -88,9 +88,7 @@ def j_grid2yee(
 
 
 @ti.kernel
-def boundary_particles(field_p: ti.template(),
-                       xmax: float,
-                       ymax: float):
+def boundary_particles(field_p: ti.template()):
     """
     Deal with boundary conditions for all the particles
     """

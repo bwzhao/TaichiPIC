@@ -47,20 +47,18 @@ def push_efield(
 
 
 @ti.kernel
-def correct_efield(
+def iter_phi(
         E_yee: ti.template(),
         rho_field: ti.template(),
         phi_old: ti.template(),
         phi_new: ti.template()
 ):
     """
-    correct the electric field to ensure the conservation of charge,
-    or to ensure that div(E)=4*pi*rho. Poission equation is solved
-    using an iterative method (Gauss-Seidel method), with 5 points.
+    iteratly calculate phi
     """
     denom = dx * dx + dy * dy
 
-    for _, i, j in ti.ndrange(niter, n_cellx, n_celly):
+    for i, j in ti.ndrange(n_cellx, n_celly):
         i_p = i + 1 if i != n_cellx - 1 else 0
         j_p = j + 1 if j != n_celly - 1 else 0
         j_m = j - 1 if j != 0 else n_celly - 1
@@ -74,6 +72,20 @@ def correct_efield(
                 ) * dx * dx * dy * dy
         )
 
+    for i, j in ti.ndrange(n_cellx, n_celly):
+        phi_old[i, j] = phi_new[i, j]
+
+
+@ti.kernel
+def correct_efield(
+        E_yee: ti.template(),
+        phi_new: ti.template()
+):
+    """
+    correct the electric field to ensure the conservation of charge,
+    or to ensure that div(E)=4*pi*rho. Poission equation is solved
+    using an iterative method (Gauss-Seidel method), with 5 points.
+    """
     for i, j in E_yee:
         i_p = i + 1 if i != n_cellx - 1 else 0
         j_p = j + 1 if j != n_celly - 1 else 0

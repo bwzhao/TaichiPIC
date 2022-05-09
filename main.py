@@ -57,19 +57,25 @@ def initiate():
     """
     # Particle spatial dim
     for idx_ptc in range(n_ptc):
-        pos_e[idx_ptc] = [xmin + ti.random() * (xmax - xmin), ymin + ti.random() * (ymax - ymin), 0.]
-        pos_p[idx_ptc] = [xmin + ti.random() * (xmax - xmin), ymin + ti.random() * (ymax - ymin), 0.]
+        # pos_e[idx_ptc] = [xmin + 0.4 * (xmax - xmin), ymin + 0.5 * (ymax - ymin), 0.]
+        # pos_p[idx_ptc] = [xmin + 0.6 * (xmax - xmin), ymin + 0.5 * (ymax - ymin), 0.]
+        #
+        # u_e[idx_ptc] = [0.99, 0, 0]
+        # u_p[idx_ptc] = [-0.99, 0, 0]
 
-        # u_e[idx_ptc] = [ti.random(), ti.random(), 0.]
-        # u_p[idx_ptc] = [ti.random(), ti.random(), 0.]
-        u_e[idx_ptc] = [0, 0, 0]
-        u_p[idx_ptc] = [0, 0, 0]
+        wght_e[idx_ptc] = n0 * (xmax - xmin) * (ymax - ymin) / n_ptc
+        wght_p[idx_ptc] = n0 * (xmax - xmin) * (ymax - ymin) / n_ptc
 
-        wght_e = n0 * (xmax - xmin) * (ymax - ymin) / n_ptc
-        wght_p = n0 * (xmax - xmin) * (ymax - ymin) / n_ptc
+    pos_e[0] = [xmin + 0.4 * (xmax - xmin), ymin + 0.4 * (ymax - ymin), 0.]
+    pos_p[0] = [xmin + 0.6 * (xmax - xmin), ymin + 0.6 * (ymax - ymin), 0.]
+
+    u_e[0] = [0, 0, 0]
+    u_p[0] = [0, 0, 0]
+
 
     # Fields:
     for i, j in B_yee:
+
         B_yee[i, j] = [0., 0., 0.]
         E_yee[i, j] = [0., 0., 0.]
 
@@ -90,8 +96,8 @@ def update():
     rhoj(1., wght_p, pos_p, u_p, J_grid, rho_grid)
     push_particles(pos_e, u_e)
     push_particles(pos_p, u_p)
-    boundary_particles(pos_e, xmax, ymax)
-    boundary_particles(pos_p, xmax, ymax)
+    boundary_particles(pos_e)
+    boundary_particles(pos_p)
     rhoj(-1., wght_e, pos_e, u_e, J_grid, rho_grid)
     rhoj(1., wght_p, pos_p, u_p, J_grid, rho_grid)
 
@@ -99,13 +105,17 @@ def update():
     j_grid2yee(J_grid, J_yee)
     push_bhalf(B_yee, E_yee)
     push_efield(B_yee, E_yee, J_yee)
-    # correct_efield(E_yee, rho_grid, phi_old, phi_new)
-    clear_field_scalar(phi_old)
+    if frame % freq_poisson == 0:
+        clear_field_scalar(phi_old)
+        for _ in range(niter_poisson):
+            iter_phi(E_yee, rho_grid, phi_old, phi_new)
+        correct_efield(E_yee, phi_new)
     push_bhalf(B_yee, E_yee)
 
 
 def illustratio_init():
     gui_1 = ti.GUI("Taichi PIC Particles", res=512, background_color=0x112F41)
+
     gui_2 = ti.GUI("Taichi PIC E-Fields", res=(n_cellx, n_celly))
     gui_3 = ti.GUI("Taichi PIC B-Fields", res=(n_cellx, n_celly))
 
@@ -120,8 +130,13 @@ def illustration_update():
     gui_1.circles(pos_p.to_numpy()[:, 0:2] / (xmax - xmin),
                 radius=3, color=0xED553B)
 
-    gui_2.set_image(E_yee)
-    gui_3.set_image(E_yee)
+    # Electric field
+    array_E = E_grid.to_numpy()
+    gui_2.set_image((array_E - array_E.min()) / (array_E.max() - array_E.min()))
+
+    # Magnetirc field
+    array_B = B_grid.to_numpy()
+    gui_3.set_image((array_B - array_B.min()) / (array_B.max() - array_B.min()))
 
     gui_1.show()
     gui_2.show()
@@ -130,7 +145,7 @@ def illustration_update():
 
 
 if __name__ == '__main__':
-    gui_1, gui_2, gui_3 = illustratio_init()
+    gui_1, gui_2, gui_3= illustratio_init()
     initiate()
     initial_push(-1., me, pos_e, u_e, E_grid, B_grid)
     initial_push(1., me, pos_p, u_p, E_grid, B_grid)

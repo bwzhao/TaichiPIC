@@ -15,14 +15,14 @@ def initial_push(q: float,
     Calculate u(0 - dt/2)
     """
     for idx_ptc in p_field:
-        p_t = p_field[idx_ptc][0:2]
+        pos_t = p_field[idx_ptc][0:2] - pos_ori
         u_t = u_field[idx_ptc]
 
         # Transfer fields from grid to particle
-        i, j = ti.cast(ti.floor(p_t * inv_dx), int)
+        i, j = ti.cast(ti.floor(pos_t * inv_dx), int)
         i_p = i + 1 if i != n_cellx - 1 else 0
         j_p = j + 1 if j != n_celly - 1 else 0
-        pq = p_t * inv_dx - ti.cast(ti.Vector([i, j]), float)
+        pq = pos_t * inv_dx - ti.cast(ti.Vector([i, j]), float)
         E_ptc = bilerp(Eg[i, j], Eg[i_p, j], Eg[i, j_p], Eg[i_p, j_p], pq)
         B_ptc = bilerp(Bg[i, j], Bg[i_p, j], Bg[i, j_p], Bg[i_p, j_p], pq)
 
@@ -57,14 +57,14 @@ def boris_push(q: float,
     Calculate u(t + dt/2) based on u(t - dt/2)
     """
     for idx_ptc in p_field:
-        p_t = p_field[idx_ptc][0:2]
+        pos_t = p_field[idx_ptc][0:2] - pos_ori
         u_tmhalf = u_field[idx_ptc]
 
         # Transfer fields from grid to particle
-        i, j = ti.cast(ti.floor(p_t * inv_dx), int)
+        i, j = ti.cast(ti.floor(pos_t * inv_dx), int)
         i_p = i + 1 if i != n_cellx - 1 else 0
         j_p = j + 1 if j != n_celly - 1 else 0
-        pq = p_t * inv_dx - ti.cast(ti.Vector([i, j]), float)
+        pq = pos_t * inv_dx - ti.cast(ti.Vector([i, j]), float)
         E_ptc = bilerp(Eg[i, j], Eg[i_p, j], Eg[i, j_p], Eg[i_p, j_p], pq)
         B_ptc = bilerp(Bg[i, j], Bg[i_p, j], Bg[i, j_p], Bg[i_p, j_p], pq)
 
@@ -114,18 +114,18 @@ def rhoj(q: float,
     computes *half* charge density RHO and *half* of the current density J on grid nodes
     """
     for idx_ptc in p_field:
-        p_ptc = p_field[idx_ptc][:2]
+        pos_ptc = p_field[idx_ptc][:2] - pos_ori
         u_ptc = u_field[idx_ptc]
         wght_ptc = wght_field[idx_ptc]
 
-        rhop = q*e*wght_ptc / (dx * dy)
+        rhop = q * e * wght_ptc / (dx * dy)
         gam = ti.sqrt(1. + u_ptc.norm_sqr())
         v_ptc = u_ptc * c / gam
 
-        i, j = ti.cast(ti.floor(p_ptc * inv_dx), int)
+        i, j = ti.cast(ti.floor(pos_ptc * inv_dx), int)
         i_p = i + 1 if i != n_cellx - 1 else 0
         j_p = j + 1 if j != n_celly - 1 else 0
-        pq = p_ptc * inv_dx - ti.cast(ti.Vector([i, j]), float)
+        pq = pos_ptc * inv_dx - ti.cast(ti.Vector([i, j]), float)
 
         # Calculate rho and J on the grid
         inv_bilear(rho_field[i, j], rho_field[i_p, j], rho_field[i, j_p], rho_field[i_p, j_p], pq, 0.5 * rhop)
