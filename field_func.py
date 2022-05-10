@@ -7,22 +7,18 @@ import taichi as ti
 
 @ti.kernel
 def push_bhalf(
-       B_yee: ti.template(),
-       E_yee: ti.template()
+        B_yee: ti.template(),
+        E_yee: ti.template()
 ):
     """
     computes the B field vector at t=t+dt/2
     """
-    for i, j in B_yee:
-        i_p = i + 1 if i != n_cellx - 1 else 0
-        j_p = j + 1 if j != n_celly - 1 else 0
+    for i, j, k in B_yee:
+        i_p = i + 1 if i != n_cellx else 0
+        j_p = j + 1 if j != n_celly else 0
+        k_p = k + 1 if k != n_cellz else 0
 
-        Bx = B_yee[i, j][0] - c * dt / (2. * dy) * (E_yee[i, j_p][2] - E_yee[i, j][2])
-        By = B_yee[i, j][1] + c * dt / (2. * dx) * (E_yee[i_p, j][2] - E_yee[i, j][2])
-        Bz = B_yee[i, j][2] - c * dt / (2. * dx) * (E_yee[i_p, j][1] - E_yee[i, j][1]) \
-                            + c * dt / (2. * dy) * (E_yee[i, j_p][0] - E_yee[i, j][0])
-
-        B_yee[i, j] = ti.Vector([Bx, By, Bz])
+        B_yee[i, j, k] += - 0.5 * dt * c * curl(E_yee, i, i_p, j, j_p, k, k_p)
 
 
 @ti.kernel
@@ -34,16 +30,12 @@ def push_efield(
     """
     computes the E field vector at time t+dt
     """
-    for i, j in E_yee:
-        j_m = j - 1 if j != 0 else n_celly - 1
-        i_m = i - 1 if i != 0 else n_cellx - 1
+    for i, j, k in E_yee:
+        i_m = i - 1 if i != 0 else n_cellx
+        j_m = j - 1 if j != 0 else n_celly
+        k_m = k - 1 if k != 0 else n_cellz
 
-        Ex = E_yee[i, j][0] + (c * dt / dy) * (B_yee[i, j][2] - B_yee[i, j_m][2]) - 4. * pi * dt * J_yee[i, j][0]
-        Ey = E_yee[i, j][1] - (c * dt / dx) * (B_yee[i, j][2] - B_yee[i_m, j][2]) - 4. * pi * dt * J_yee[i, j][1]
-        Ez = E_yee[i, j][2] + (c * dt / dx) * (B_yee[i, j][1] - B_yee[i_m, j][1]) \
-                            - (c * dt / dy) * (B_yee[i, j][0] - B_yee[i, j_m][0]) - 4. * pi * dt * J_yee[i, j][2]
-
-        E_yee[i, j] = ti.Vector([Ex, Ey, Ez])
+        E_yee[i, j, k] += dt * (c * curl(B_yee, i_m, i, j_m, j, k_m, k) - 4. * pi * J_yee[i, j, k])
 
 
 @ti.kernel
@@ -56,24 +48,29 @@ def iter_phi(
     """
     iteratly calculate phi
     """
-    denom = dx * dx + dy * dy
+    denom = dx * dx * dy * dy + dx * dx * dz * dz + dy * dy * dz * dz
 
-    for i, j in ti.ndrange(n_cellx, n_celly):
-        i_p = i + 1 if i != n_cellx - 1 else 0
-        j_p = j + 1 if j != n_celly - 1 else 0
-        j_m = j - 1 if j != 0 else n_celly - 1
-        i_m = i - 1 if i != 0 else n_cellx - 1
+    for i, j, k in phi_new:
+        i_p = i + 1 if i != n_cellx else 0
+        j_p = j + 1 if j != n_celly else 0
+        k_p = k + 1 if k != n_cellz else 0
+        i_m = i - 1 if i != 0 else n_cellx
+        j_m = j - 1 if j != 0 else n_celly
+        k_m = k - 1 if k != 0 else n_cellz
 
-        phi_new[i, j] = 0.5 / denom * (
-                (phi_old[i_p, j] + phi_old[i_m, j]) * dy * dy
-                + (phi_old[i, j_p] + phi_old[i, j_m]) * dx * dx
-                + (
-                        4. * pi * rho_field[i, j] - ((E_yee[i, j][0] - E_yee[i_m, j][0]) / dx + (E_yee[i, j][1] - E_yee[i, j_m][1]) / dy)
-                ) * dx * dx * dy * dy
-        )
+        phi_new[i, j, k] = 0.5 / denom \
+                        * (
+                                (phi_old[i_p, j, k] + phi_old[i_m, j, k]) * dy * dy * dz * dz
+                                + (phi_old[i, j_p, k] + phi_old[i, j_m, k]) * dx * dx * dz * dz
+                                + (phi_old[i, j, k_p] + phi_old[i, j, k_m]) * dx * dx * dy * dy
+                                + (
+                                        4. * pi * rho_field[i, j, k]
+                                        - div(E_yee, i_m, i, j_m, j, k_m, k)
+                                ) * dx * dx * dy * dy * dz * dz
+                        )
 
-    for i, j in ti.ndrange(n_cellx, n_celly):
-        phi_old[i, j] = phi_new[i, j]
+    for i, j, k in phi_new:
+        phi_old[i, j, k] = phi_new[i, j, k]
 
 
 @ti.kernel
@@ -86,11 +83,9 @@ def correct_efield(
     or to ensure that div(E)=4*pi*rho. Poission equation is solved
     using an iterative method (Gauss-Seidel method), with 5 points.
     """
-    for i, j in E_yee:
-        i_p = i + 1 if i != n_cellx - 1 else 0
-        j_p = j + 1 if j != n_celly - 1 else 0
+    for i, j, k in E_yee:
+        i_p = i + 1 if i != n_cellx else 0
+        j_p = j + 1 if j != n_celly else 0
+        k_p = k + 1 if k != n_cellz else 0
 
-        Ex = E_yee[i, j][0] - (phi_new[i_p, j] - phi_new[i, j]) / dx
-        Ey = E_yee[i, j][1] - (phi_new[i, j_p] - phi_new[i, j]) / dy
-
-        E_yee[i, j] = ti.Vector([Ex, Ey, 0.])
+        E_yee[i, j, k] -= grad(phi_new, i, i_p, j, j_p, k, k_p)

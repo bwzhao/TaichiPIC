@@ -4,20 +4,22 @@ import math
 ########################################################################################################################
 # Parameters
 # Particles
-n_ptc = 1
+n_ptc = 100
 
 # Setup for the grid
-n_cellx, n_celly = 512, 512
-xmin, xmax, ymin, ymax = 0., 100., 0., 100.   # Spatial region
-pos_ori = [xmin, ymin]
-dx, dy = (xmax - xmin) / n_cellx, (ymax - ymin) / n_celly   # Spatial step
-inv_dx, inv_dy = 1. / dx, 1. / dy   # Inverse dx and dy
+n_cellx, n_celly, n_cellz = 32, 32, 16
+xmin, xmax, ymin, ymax, zmin, zmax = 0., 32., 0., 32., 0., 16.   # Spatial region
+pos_ori = [xmin, ymin, zmin]
+dx, dy, dz = (xmax - xmin) / n_cellx, (ymax - ymin) / n_celly, (zmax - zmin) / n_cellz   # Spatial step
+inv_dx, inv_dy, inv_dz = 1. / dx, 1. / dy, 1. / dz   # Inverse dx and dy
+dr = [dx, dy, dz]
+inv_dr = [inv_dx, inv_dy, inv_dz]
 
 # Time step
-dt = 0.99*dx*dy / math.sqrt(dx*dx+dy*dy) / constants.c
+dt = 0.99 / math.sqrt(inv_dx * inv_dx + inv_dy * inv_dy + inv_dz * inv_dz) / constants.c
 
 # Physical density of the particles
-n0 = 1.
+n0 = 0.000001
 
 # External radiation field energy density
 # TODO: Figure out what those parameters are!
