@@ -63,9 +63,13 @@ def trilerp(f_field: ti.template(),
     :return: The interpolated values
     """
     i, j, k = ti.cast(ti.floor(pos * inv_dr), int)
-    i_p = i + 1 if i != n_cellx else 0
-    j_p = j + 1 if j != n_celly else 0
-    k_p = k + 1 if k != n_cellz else 0
+    i = i if i != n_cellx else n_cellx - 1
+    j = j if j != n_celly else n_celly - 1
+    k = k if k != n_cellz else n_cellz - 1
+    assert i < n_cellx and j < n_celly and k < n_cellz
+    i_p = i + 1 if i != n_cellx - 1 else 0
+    j_p = j + 1 if j != n_celly - 1 else 0
+    k_p = k + 1 if k != n_cellz - 1 else 0
 
     xq, yq, zq = pos * inv_dr - ti.cast(ti.Vector([i, j, k]), float)
 
@@ -87,9 +91,13 @@ def inv_trilerp(f_field: ti.template(),
                 val
                 ):
     i, j, k = ti.cast(ti.floor(pos * inv_dr), int)
-    i_p = i + 1 if i != n_cellx else 0
-    j_p = j + 1 if j != n_celly else 0
-    k_p = k + 1 if k != n_cellz else 0
+    i = i if i != n_cellx else n_cellx - 1
+    j = j if j != n_celly else n_celly - 1
+    k = k if k != n_cellz else n_cellz - 1
+    assert i < n_cellx and j < n_celly and k < n_cellz
+    i_p = i + 1 if i != n_cellx - 1 else 0
+    j_p = j + 1 if j != n_celly - 1 else 0
+    k_p = k + 1 if k != n_cellz - 1 else 0
     xq, yq, zq = pos * inv_dr - ti.cast(ti.Vector([i, j, k]), float)
 
     f_field[i, j, k] += val * (1. - xq) * (1. - yq) * (1. - zq)
@@ -112,9 +120,9 @@ def eb_yee2grid(E_grid: ti.template(),
     Transfer field from Yee lattice to grids
     """
     for i, j, k in E_grid:
-        i_m = i - 1 if i != 0 else n_cellx
-        j_m = j - 1 if j != 0 else n_celly
-        k_m = k - 1 if k != 0 else n_cellz
+        i_m = i - 1 if i != 0 else n_cellx - 1
+        j_m = j - 1 if j != 0 else n_celly - 1
+        k_m = k - 1 if k != 0 else n_cellz - 1
 
         Egx_ptc = (E_yee[i, j, k][0] + E_yee[i_m, j, k][0]) / 2.
         Egy_ptc = (E_yee[i, j, k][1] + E_yee[i, j_m, k][1]) / 2.
@@ -136,9 +144,9 @@ def j_grid2yee(
     Transfer J from grid to yee lattice
     """
     for i, j, k in J_grid:
-        i_p = i + 1 if i != n_cellx else 0
-        j_p = j + 1 if j != n_celly else 0
-        k_p = k + 1 if k != n_cellz else 0
+        i_p = i + 1 if i != n_cellx - 1 else 0
+        j_p = j + 1 if j != n_celly - 1 else 0
+        k_p = k + 1 if k != n_cellz - 1 else 0
 
         Jx = (J_grid[i, j, k][0] + J_grid[i_p, j, k][0]) / 2.
         Jy = (J_grid[i, j, k][1] + J_grid[i, j_p, k][1]) / 2.
@@ -153,9 +161,11 @@ def boundary_particles(field_p: ti.template()):
     Deal with boundary conditions for all the particles
     """
     for idx_ptc in field_p:
-        field_p[idx_ptc][0] = (field_p[idx_ptc][0] - xmax) if field_p[idx_ptc][0] > xmax else field_p[idx_ptc][0]
+        field_p[idx_ptc][0] = (field_p[idx_ptc][0] - xmax) if field_p[idx_ptc][0] >= xmax else field_p[idx_ptc][0]
         field_p[idx_ptc][0] = (field_p[idx_ptc][0] + xmax) if field_p[idx_ptc][0] < 0 else field_p[idx_ptc][0]
-        field_p[idx_ptc][1] = (field_p[idx_ptc][1] - ymax) if field_p[idx_ptc][1] > ymax else field_p[idx_ptc][1]
+        field_p[idx_ptc][1] = (field_p[idx_ptc][1] - ymax) if field_p[idx_ptc][1] >= ymax else field_p[idx_ptc][1]
         field_p[idx_ptc][1] = (field_p[idx_ptc][1] + ymax) if field_p[idx_ptc][1] < 0 else field_p[idx_ptc][1]
-        field_p[idx_ptc][2] = (field_p[idx_ptc][2] - zmax) if field_p[idx_ptc][2] > zmax else field_p[idx_ptc][2]
+        field_p[idx_ptc][2] = (field_p[idx_ptc][2] - zmax) if field_p[idx_ptc][2] >= zmax else field_p[idx_ptc][2]
         field_p[idx_ptc][2] = (field_p[idx_ptc][2] + zmax) if field_p[idx_ptc][2] < 0 else field_p[idx_ptc][2]
+
+        assert field_p[idx_ptc][0] < xmax and field_p[idx_ptc][1] < ymax and field_p[idx_ptc][2] < zmax

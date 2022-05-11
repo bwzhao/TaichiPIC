@@ -16,4 +16,4 @@ mp = 1.6726231e-24
 # 1 eV in erg [erg]
 evtoerg = 1.602177e-12
 # pi
-pi = math.acos(-1.0e0)
+pi = math.pi
