@@ -1,3 +1,6 @@
+# field.py: ti.kernels for calculating E/M fields
+# Author: Bowen Zhao (zzzhaobowen@gmail.com)
+
 from parameters import *
 from constants import *
 from helper_func import *

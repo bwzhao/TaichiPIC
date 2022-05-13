@@ -1,3 +1,6 @@
+# helper_func.py: helper ti.kernels and ti.funcs
+# Author: Bowen Zhao (zzzhaobowen@gmail.com)
+
 import taichi as ti
 from parameters import *
 from constants import *
@@ -94,7 +97,8 @@ def div_2d(f_field: ti.template(),
 def trilerp(f_field: ti.template(),
             pos):
     """
-    :param f_field: field to be interpolated
+    Function of transferring the quantities on the particle to grid using tri-linear interpolation
+    :param f_field: field to be interpolated on the grid
     :param pos: pos of the particle
     :return: The interpolated values
     """
@@ -126,7 +130,8 @@ def trilerp(f_field: ti.template(),
 def bilerp(f_field: ti.template(),
             pos):
     """
-    :param f_field: field to be interpolated
+    Function of transferring the quantities on the particle to grid using bi-linear interpolation
+    :param f_field: field to be interpolated on the grid
     :param pos: pos of the particle
     :return: The interpolated values
     """
@@ -154,6 +159,13 @@ def inv_trilerp(f_field: ti.template(),
                 pos,
                 val
                 ):
+    """
+    Function of transferring the quantities on grid to particles using trii-linear interpolation
+    :param f_field: field on the grid
+    :param pos: pos of the particle
+    :param val: values on the particle
+    :return: the interpolated value
+    """
     i, j, k = ti.cast(ti.floor(pos * inv_dr), int)
     i = i if i < n_cellx else n_cellx - 1
     j = j if j < n_celly else n_celly - 1
@@ -179,6 +191,13 @@ def inv_bilerp(f_field: ti.template(),
                 pos,
                 val
                 ):
+    """
+    Function of transferring the quantities on grid to particles using bi-linear interpolation
+    :param f_field: field on the grid
+    :param pos: pos of the particle
+    :param val: values on the particle
+    :return: the interpolated value
+    """
     i, j = ti.cast(ti.floor(pos * inv_dr), int)
     i = i if i < n_cellx else n_cellx - 1
     j = j if j < n_celly else n_celly - 1

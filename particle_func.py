@@ -1,3 +1,6 @@
+# particles_func.py: ti.kernels for calculating particles
+# Author: Bowen Zhao (zzzhaobowen@gmail.com)
+
 from parameters import *
 from constants import *
 from helper_func import *

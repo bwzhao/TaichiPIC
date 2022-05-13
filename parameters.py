@@ -1,18 +1,20 @@
+# parameters.py: model parameters
+# Author: Bowen Zhao (zzzhaobowen@gmail.com)
+
 import constants
 import math
 
 ########################################################################################################################
 # Parameters
-# Particles
-n_ptc = 1
 
 # Dimensions
 DIM = 3
 
 # Setup for the grid
 if DIM == 3:
-    n_cellx, n_celly, n_cellz = 32, 32, 32
-    n_cells = (n_cellx, n_celly, n_cellz)
+    n_cellx, n_celly, n_cellz = 128, 128, 128
+    dim_cells = (n_cellx, n_celly, n_cellz)
+    num_cells = n_cellx * n_celly * n_cellz
     xmin, xmax, ymin, ymax, zmin, zmax = 0., 128., 0., 128., 0., 128.   # Spatial region
     pos_ori = [xmin, ymin, zmin]
     dx, dy, dz = (xmax - xmin) / n_cellx, (ymax - ymin) / n_celly, (zmax - zmin) / n_cellz   # Spatial step
@@ -24,7 +26,8 @@ if DIM == 3:
     dt = 0.99 / math.sqrt(inv_dx * inv_dx + inv_dy * inv_dy + inv_dz * inv_dz) / constants.c
 else:
     n_cellx, n_celly = 128, 128
-    n_cells = (n_cellx, n_celly)
+    dim_cells = (n_cellx, n_celly)
+    num_cells = n_cellx * n_celly
     xmin, xmax, ymin, ymax = 0., 128., 0., 128.  # Spatial region
     pos_ori = [xmin, ymin, 0.]
     dx, dy = (xmax - xmin) / n_cellx, (ymax - ymin) / n_celly  # Spatial step
@@ -34,6 +37,9 @@ else:
     inv_dr = [inv_dx, inv_dy]
     # Time step
     dt = 0.99 / math.sqrt(inv_dx * inv_dx + inv_dy * inv_dy) / constants.c
+
+# Particles
+n_ptc = num_cells
 
 # Physical density of the particles
 n0 = 1.
