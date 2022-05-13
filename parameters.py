@@ -10,6 +10,9 @@ import math
 # Dimensions
 DIM = 3
 
+# If use GGUI
+GGUI = False
+
 # Setup for the grid
 if DIM == 3:
     n_cellx, n_celly, n_cellz = 128, 128, 128
@@ -39,7 +42,8 @@ else:
     dt = 0.99 / math.sqrt(inv_dx * inv_dx + inv_dy * inv_dy) / constants.c
 
 # Particles
-n_ptc = num_cells
+# n_ptc = num_cells
+n_ptc = 128
 
 # Physical density of the particles
 n0 = 1.

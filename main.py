@@ -14,7 +14,7 @@ from helper_func import *
 from gui import *
 
 
-ti.init(arch=ti.vulkan, debug=True, default_fp=ti.f32, default_ip=ti.i32)
+ti.init(arch=ti.cuda, debug=True)
 
 ########################################################################################################################
 # Position
@@ -74,14 +74,14 @@ def initiate():
             pos_ptc = ti.Vector([xmin + ti.random() * (xmax - xmin),
                                  ymin + ti.random() * (ymax - ymin),
                                  zmin + ti.random() * (zmax - zmin)])
-            u_ptc = [0.9, 0.2, 0.1]
+            u_ptc = ti.Vector([ti.random(), ti.random(), ti.random()])
             wght_ptc = n0 * (xmax - xmin) * (ymax - ymin) * (zmax - zmin) / n_ptc
 
             pos_e[idx_ptc] = pos_ptc
             pos_p[idx_ptc] = pos_ptc
 
             u_e[idx_ptc] = u_ptc
-            u_p[idx_ptc] = u_ptc
+            u_p[idx_ptc] = -u_ptc
 
             wght_e[idx_ptc] = wght_ptc
             wght_p[idx_ptc] = wght_ptc
@@ -135,33 +135,39 @@ def update():
     j_grid2yee(J_grid, J_yee)
     push_bhalf(B_yee, E_yee)
     push_efield(B_yee, E_yee, J_yee)
-    if frame % freq_poisson == 0:
-        clear_field_scalar(phi_old)
-        clear_field_scalar(phi_new)
-        for _ in range(niter_poisson):
-            iter_phi(E_yee, rho_grid, phi_old, phi_new)
-        correct_efield(E_yee, phi_new)
+    # if frame % freq_poisson == 0:
+    #     clear_field_scalar(phi_old)
+    #     clear_field_scalar(phi_new)
+    #     for _ in range(niter_poisson):
+    #         iter_phi(E_yee, rho_grid, phi_old, phi_new)
+    #     correct_efield(E_yee, phi_new)
     push_bhalf(B_yee, E_yee)
 ########################################################################################################################
 
 
 if __name__ == '__main__':
-    # window, canvas, scene, camera = gui_init()
-    # set_vertics_indices(vertices, indices_xy, indices_xz, indices_yz,
-    #                     normals_xy, normals_xz, normals_yz)
+    if ti.static(GGUI):
+        window, canvas, scene, camera = ggui_init()
+        set_vertics_indices(vertices, indices_xy, indices_xz, indices_yz,
+                            normals_xy, normals_xz, normals_yz)
+    else:
+        gui = gui_init()
+
     initiate()
     eb_yee2grid(E_grid, E_yee, B_grid, B_yee)
     initial_push(-1., me, pos_e, u_e, E_grid, B_grid)
     initial_push(1., mp, pos_p, u_p, E_grid, B_grid)
 
     for frame in range(10000):
-        if frame % 10 == 0:
+        if frame % 100 == 0:
             print("#Updates: %d" % frame)
         update()
-        # gui_update(window, canvas, scene, camera,
-        #            pos_e, pos_p, colors_e, colors_p,
-        #            vertices, indices_xy, indices_xz, indices_yz,
-        #            normals_xy, normals_xz, normals_yz)
-
+        if ti.static(GGUI):
+            ggui_update(window, canvas, scene, camera,
+                        pos_e, pos_p, colors_e, colors_p,
+                        vertices, indices_xy, indices_xz, indices_yz,
+                        normals_xy, normals_xz, normals_yz)
+        else:
+            gui_update(gui, pos_e, pos_p)
 
 

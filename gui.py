@@ -2,8 +2,34 @@
 # Author: Bowen Zhao (zzzhaobowen@gmail.com)
 
 import taichi as ti
+import numpy as np
 
 from parameters import *
+
+
+def gui_init():
+    gui = ti.GUI('Taichi PIC', background_color=0x000000)
+
+    return gui
+
+
+def gui_update(gui, pos_e, pos_p):
+    gui.circles(T(pos_e.to_numpy() / (xmax - xmin)), radius=1.5, color=0x00FF00)
+    gui.circles(T(pos_p.to_numpy() / (xmax - xmin)), radius=1.5, color=0xff0000)
+
+    gui.show()
+
+
+def T(a):
+    phi, theta = np.radians(28), np.radians(32)
+
+    a = a - 0.5
+    x, y, z = a[:, 0], a[:, 1], a[:, 2]
+    c, s = np.cos(phi), np.sin(phi)
+    C, S = np.cos(theta), np.sin(theta)
+    x, z = x * c + z * s, z * c - x * s
+    u, v = x, y * C + z * S
+    return np.array([u, v]).swapaxes(0, 1) + 0.5
 
 
 @ti.kernel
@@ -53,7 +79,7 @@ def set_vertics_indices(vertices: ti.template(),
         normals_yz[idx] = [1., 0., 0.]
 
 
-def gui_init():
+def ggui_init():
     """
     Initialize GGUI in Taichi
     :return:
@@ -70,10 +96,10 @@ def gui_init():
     return window, canvas, scene, camera
 
 
-def gui_update(window, canvas, scene, camera,
-               pos_e, pos_p, colors_e, colors_p,
-               vertices, indices_xy, indices_xz, indices_yz,
-               normals_xy, normals_xz, normals_yz):
+def ggui_update(window, canvas, scene, camera,
+                pos_e, pos_p, colors_e, colors_p,
+                vertices, indices_xy, indices_xz, indices_yz,
+                normals_xy, normals_xz, normals_yz):
     """
     Updates the fields used in illustration
     """
