@@ -17,11 +17,6 @@ from gui import *
 ti.init(arch=ti.vulkan, debug=True, default_fp=ti.f32, default_ip=ti.i32)
 
 ########################################################################################################################
-"""
-Index Convention:
-x, y used as real numbers in reason space
-i, j used a integers when labeling the grids
-"""
 # Position
 pos_e = ti.Vector.field(3, dtype=float, shape=n_ptc)  # electrons
 pos_p = ti.Vector.field(3, dtype=float, shape=n_ptc)  # ions
@@ -41,18 +36,28 @@ colors_p = ti.Vector.field(4, dtype=float, shape=n_ptc)
 # TODO: Here we only use PBC (So that we only need (n_cellx, n_celly, n_cellz) grids),
 #  but in general we can also have other BCs.
 # Field
-B_yee = ti.Vector.field(3, dtype=float, shape=n_cells)   # Magnetic on Yee lattice
-E_yee = ti.Vector.field(3, dtype=float, shape=n_cells)   # Electric on Yee lattice
-B_grid = ti.Vector.field(3, dtype=float, shape=n_cells)   # Magnetic at nodes
-E_grid = ti.Vector.field(3, dtype=float, shape=n_cells)   # Electric at nodes
+B_yee = ti.Vector.field(3, dtype=float, shape=dim_cells)   # Magnetic on Yee lattice
+E_yee = ti.Vector.field(3, dtype=float, shape=dim_cells)   # Electric on Yee lattice
+B_grid = ti.Vector.field(3, dtype=float, shape=dim_cells)   # Magnetic at nodes
+E_grid = ti.Vector.field(3, dtype=float, shape=dim_cells)   # Electric at nodes
 
 # Charge and current
-J_yee = ti.Vector.field(3, dtype=float, shape=n_cells)  # Current on Yee lattice
-J_grid = ti.Vector.field(3, dtype=float, shape=n_cells)  # Current at nodes
-rho_grid = ti.field(dtype=float, shape=n_cells)  # Charge
+J_yee = ti.Vector.field(3, dtype=float, shape=dim_cells)  # Current on Yee lattice
+J_grid = ti.Vector.field(3, dtype=float, shape=dim_cells)  # Current at nodes
+rho_grid = ti.field(dtype=float, shape=dim_cells)  # Charge
 
-phi_new = ti.field(dtype=float, shape=n_cells)  # potential
-phi_old = ti.field(dtype=float, shape=n_cells)  # potential
+phi_new = ti.field(dtype=float, shape=dim_cells)  # potential
+phi_old = ti.field(dtype=float, shape=dim_cells)  # potential
+
+# GUI
+indices_xy = ti.field(int, 6)
+indices_xz = ti.field(int, 6)
+indices_yz = ti.field(int, 6)
+normals_xy = ti.Vector.field(3, float, 6)
+normals_xz = ti.Vector.field(3, float, 6)
+normals_yz = ti.Vector.field(3, float, 6)
+vertices = ti.Vector.field(3, float, 7)
+
 ########################################################################################################################
 
 
@@ -66,10 +71,10 @@ def initiate():
     # Particle spatial dim
     for idx_ptc in range(n_ptc):
         if ti.static(DIM == 3):
-            pos_ptc = ti.Vector([xmin + ti.random() * (xmax - xmin) * 0.5,
-                              ymin + ti.random() * (ymax - ymin) * 0.5,
-                              zmin + ti.random() * (zmax - zmin) * 0.5])
-            u_ptc = [0.9, 0., 0.]
+            pos_ptc = ti.Vector([xmin + ti.random() * (xmax - xmin),
+                                 ymin + ti.random() * (ymax - ymin),
+                                 zmin + ti.random() * (zmax - zmin)])
+            u_ptc = [0.9, 0.2, 0.1]
             wght_ptc = n0 * (xmax - xmin) * (ymax - ymin) * (zmax - zmin) / n_ptc
 
             pos_e[idx_ptc] = pos_ptc
@@ -96,12 +101,12 @@ def initiate():
             wght_e[idx_ptc] = wght_ptc
             wght_p[idx_ptc] = wght_ptc
 
-        colors_e[idx_ptc] = ti.Vector([0., 0., 1., 1.])
-        colors_p[idx_ptc] = ti.Vector([1., 0., 0., 1.])
+        colors_e[idx_ptc] = ti.Vector([1., 1., 1., 1.])
+        colors_p[idx_ptc] = ti.Vector([1., 1., 1., 1.])
 
     # Fields:
     for Idx in ti.grouped(B_yee):
-        B_yee[Idx] = [0., 0., 100.]
+        B_yee[Idx] = [0., 0., 0.]
         E_yee[Idx] = [0., 0., 0.]
 
 
@@ -141,20 +146,22 @@ def update():
 
 
 if __name__ == '__main__':
-    window, canvas, scene, camera = gui_init()
+    # window, canvas, scene, camera = gui_init()
+    # set_vertics_indices(vertices, indices_xy, indices_xz, indices_yz,
+    #                     normals_xy, normals_xz, normals_yz)
     initiate()
     eb_yee2grid(E_grid, E_yee, B_grid, B_yee)
     initial_push(-1., me, pos_e, u_e, E_grid, B_grid)
     initial_push(1., mp, pos_p, u_p, E_grid, B_grid)
 
     for frame in range(10000):
+        if frame % 10 == 0:
+            print("#Updates: %d" % frame)
         update()
-        if frame % 5 == 0:
-            # Only for debug
-            # print(E_yee[0, 0], B_yee[0, 0])
-            # print(rho_grid[0, 0], J_grid[0, 0])
-            # print(pos_e[0])
-            gui_update(window, canvas, scene, camera, pos_e, pos_p, colors_e, colors_p)
+        # gui_update(window, canvas, scene, camera,
+        #            pos_e, pos_p, colors_e, colors_p,
+        #            vertices, indices_xy, indices_xz, indices_yz,
+        #            normals_xy, normals_xz, normals_yz)
 
 
 

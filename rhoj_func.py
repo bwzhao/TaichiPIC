@@ -1,3 +1,6 @@
+# rhoj_func.py: ti.kernels for calculating charge densities and currents
+# Author: Bowen Zhao (zzzhaobowen@gmail.com)
+
 from parameters import *
 from constants import *
 from helper_func import *

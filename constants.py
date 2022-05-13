@@ -1,3 +1,6 @@
+# constants.py: Constants used in calculations
+# Author: Bowen Zhao (zzzhaobowen@gmail.com)
+
 import math
 
 # Constants
