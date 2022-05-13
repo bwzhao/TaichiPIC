@@ -9,10 +9,12 @@ import numpy as np
 
 from particle_func import *
 from field_func import *
+from rhoj_func import *
 from helper_func import *
+from gui import *
 
 
-ti.init(arch=ti.vulkan, debug=True, default_fp=ti.f32, default_ip=ti.i32)
+ti.init(arch=ti.cpu, debug=True, default_fp=ti.f32, default_ip=ti.i32)
 
 ########################################################################################################################
 """
@@ -21,12 +23,12 @@ x, y used as real numbers in reason space
 i, j used a integers when labeling the grids
 """
 # Position
-pos_e = ti.Vector.field(3, dtype=float, shape=n_ptc) # electrons
-pos_p = ti.Vector.field(3, dtype=float, shape=n_ptc) # ions
+pos_e = ti.Vector.field(3, dtype=float, shape=n_ptc)  # electrons
+pos_p = ti.Vector.field(3, dtype=float, shape=n_ptc)  # ions
 
 # Velocity
-u_e = ti.Vector.field(3, dtype=float, shape=n_ptc) # electrons
-u_p = ti.Vector.field(3, dtype=float, shape=n_ptc) # ions
+u_e = ti.Vector.field(3, dtype=float, shape=n_ptc)  # electrons
+u_p = ti.Vector.field(3, dtype=float, shape=n_ptc)  # ions
 
 # Weight of the macro-particles
 wght_e = ti.field(dtype=float, shape=n_ptc)  # electrons
@@ -39,18 +41,18 @@ colors_p = ti.Vector.field(4, dtype=float, shape=n_ptc)
 # TODO: Here we only use PBC (So that we only need (n_cellx, n_celly, n_cellz) grids),
 #  but in general we can also have other BCs.
 # Field
-B_yee = ti.Vector.field(3, dtype=float, shape=(n_cellx, n_celly, n_cellz))   # Magnetic on Yee lattice
-E_yee = ti.Vector.field(3, dtype=float, shape=(n_cellx, n_celly, n_cellz))   # Electric on Yee lattice
-B_grid = ti.Vector.field(3, dtype=float, shape=(n_cellx, n_celly, n_cellz))   # Magnetic at nodes
-E_grid = ti.Vector.field(3, dtype=float, shape=(n_cellx, n_celly, n_cellz))   # Electric at nodes
+B_yee = ti.Vector.field(3, dtype=float, shape=n_cells)   # Magnetic on Yee lattice
+E_yee = ti.Vector.field(3, dtype=float, shape=n_cells)   # Electric on Yee lattice
+B_grid = ti.Vector.field(3, dtype=float, shape=n_cells)   # Magnetic at nodes
+E_grid = ti.Vector.field(3, dtype=float, shape=n_cells)   # Electric at nodes
 
 # Charge and current
-J_yee = ti.Vector.field(3, dtype=float, shape=(n_cellx, n_celly, n_cellz))  # Current on Yee lattice
-J_grid = ti.Vector.field(3, dtype=float, shape=(n_cellx, n_celly, n_cellz))  # Current at nodes
-rho_grid = ti.field(dtype=float, shape=(n_cellx, n_celly, n_cellz))  # Charge
+J_yee = ti.Vector.field(3, dtype=float, shape=n_cells)  # Current on Yee lattice
+J_grid = ti.Vector.field(3, dtype=float, shape=n_cells)  # Current at nodes
+rho_grid = ti.field(dtype=float, shape=n_cells)  # Charge
 
-phi_new = ti.field(dtype=float, shape=(n_cellx, n_celly, n_cellz))  # potential
-phi_old = ti.field(dtype=float, shape=(n_cellx, n_celly, n_cellz))  # potential
+phi_new = ti.field(dtype=float, shape=n_cells)  # potential
+phi_old = ti.field(dtype=float, shape=n_cells)  # potential
 ########################################################################################################################
 
 
@@ -63,75 +65,44 @@ def initiate():
     """
     # Particle spatial dim
     for idx_ptc in range(n_ptc):
-        pos_e[idx_ptc] = [xmin + ti.random() * (xmax - xmin) * 0.5,
-                          ymin + ti.random() * (ymax - ymin) * 0.5,
-                          zmin + ti.random() * (zmax - zmin) * 0.5]
-        pos_p[idx_ptc] = [xmin + ti.random() * (xmax - xmin) * 0.5,
-                          ymin + ti.random() * (ymax - ymin) * 0.5,
-                          zmin + ti.random() * (zmax - zmin) * 0.5]
+        if ti.static(DIM == 3):
+            pos_ptc = ti.Vector([xmin + ti.random() * (xmax - xmin) * 0.5,
+                              ymin + ti.random() * (ymax - ymin) * 0.5,
+                              zmin + ti.random() * (zmax - zmin) * 0.5])
+            u_ptc = [0., 0., 0.]
+            wght_ptc = n0 * (xmax - xmin) * (ymax - ymin) * (zmax - zmin) / n_ptc
 
-        u_e[idx_ptc] = [0.,
-                        0.,
-                        0.]
+            pos_e[idx_ptc] = pos_ptc
+            pos_p[idx_ptc] = pos_ptc
 
-        u_p[idx_ptc] = [0.,
-                        0.,
-                        0.]
+            u_e[idx_ptc] = u_ptc
+            u_p[idx_ptc] = u_ptc
 
-        wght_e[idx_ptc] = n0 * (xmax - xmin) * (ymax - ymin) * (zmax - zmin) / n_ptc
-        wght_p[idx_ptc] = n0 * (xmax - xmin) * (ymax - ymin) * (zmax - zmin) / n_ptc
+            wght_e[idx_ptc] = wght_ptc
+            wght_p[idx_ptc] = wght_ptc
+        else:
+            pos_ptc = ti.Vector([xmin + ti.random() * (xmax - xmin) * 0.5,
+                       ymin + ti.random() * (ymax - ymin) * 0.5,
+                       0.])
+            u_ptc = [0.1, 0., 0.]
+            wght_ptc = n0 * (xmax - xmin) * (ymax - ymin) / n_ptc
+
+            pos_e[idx_ptc] = pos_ptc
+            pos_p[idx_ptc] = pos_ptc
+
+            u_e[idx_ptc] = u_ptc
+            u_p[idx_ptc] = u_ptc
+
+            wght_e[idx_ptc] = wght_ptc
+            wght_p[idx_ptc] = wght_ptc
 
         colors_e[idx_ptc] = ti.Vector([1., 0., 0., 1.])
         colors_p[idx_ptc] = ti.Vector([0., 0., 1., 1.])
 
-    # pos_e[0] = [xmin + 0.4 * (xmax - xmin), ymin + 0.4 * (ymax - ymin), 0.5]
-    # pos_p[0] = [xmin + 0.6 * (xmax - xmin), ymin + 0.6 * (ymax - ymin), 0.5]
-    #
-    # u_e[0] = [0, 0., 0]
-    # u_p[0] = [0, 0., 0]
-
-
     # Fields:
-    for i, j, k in B_yee:
-        B_yee[i, j, k] = [0., 0., 1.]
-        E_yee[i, j, k] = [1, 0., 0.]
-
-
-def gui_init():
-    window = ti.ui.Window("Taichi PIC Particles", res=(512, 512), vsync=True)
-
-    canvas = window.get_canvas()
-    scene = ti.ui.Scene()
-    camera = ti.ui.make_camera()
-    camera.position(1.5, 1.5, 2)
-    camera.lookat(0.5, 0.5, 0.5)
-    camera.fov(55)
-
-    return window, canvas, scene, camera
-
-
-def gui_update(window, canvas, scene, camera):
-    camera.track_user_inputs(window, movement_speed=0.03, hold_key=ti.ui.RMB)
-    scene.set_camera(camera)
-
-    scene.ambient_light((0, 0, 0))
-    particles_radius_e = 0.05
-    particles_radius_p = 0.1
-
-    # Electrons
-    show_field_e = ti.Vector.field(2, float, shape=n_ptc)
-    show_field_p = ti.Vector.field(2, float, shape=n_ptc)
-    show_field_e.from_numpy(pos_e.to_numpy()[:, 0:2] / (xmax - xmin))
-    show_field_p.from_numpy(pos_p.to_numpy()[:, 0:2] / (xmax - xmin))
-    scene.particles(show_field_e, per_vertex_color=colors_e, radius=particles_radius_e)
-    scene.particles(show_field_p, per_vertex_color=colors_p, radius=particles_radius_p)
-
-    scene.point_light(pos=(0.5, 1.5, 0.5), color=(0.5, 0.5, 0.5))
-    scene.point_light(pos=(0.5, 1.5, 1.5), color=(0.5, 0.5, 0.5))
-
-    canvas.scene(scene)
-
-    window.show()
+    for Idx in ti.grouped(B_yee):
+        B_yee[Idx] = [0., 0., 1.]
+        E_yee[Idx] = [0., 0., 0.]
 
 
 # Update
@@ -170,19 +141,20 @@ def update():
 
 
 if __name__ == '__main__':
-    window, canvas, scene, camera = gui_init()
+    # window, canvas, scene, camera = gui_init()
     initiate()
     eb_yee2grid(E_grid, E_yee, B_grid, B_yee)
     initial_push(-1., me, pos_e, u_e, E_grid, B_grid)
-    # initial_push(1., mp, pos_p, u_p, E_grid, B_grid)
+    initial_push(1., mp, pos_p, u_p, E_grid, B_grid)
 
     for frame in range(10000):
         update()
         if frame % 5 == 0:
             # Only for debug
-            print(E_yee[0, 0, 0], B_yee[0, 0, 0])
-            print(rho_grid[0, 0, 0], J_grid[0, 0, 0])
-            gui_update(window, canvas, scene, camera)
+            print(E_yee[0, 0], B_yee[0, 0])
+            print(rho_grid[0, 0], J_grid[0, 0])
+            print(pos_e[0])
+            # gui_update(window, canvas, scene, camera, pos_e, pos_p, colors_e, colors_p)
 
 
 

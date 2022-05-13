@@ -17,3 +17,6 @@ mp = 1.6726231e-24
 evtoerg = 1.602177e-12
 # pi
 pi = math.pi
+
+# Dimensions
+DIM = 2
