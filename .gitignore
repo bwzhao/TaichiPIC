@@ -1,0 +1,8 @@
+# Ignore IDE files
+.idea/*
+
+# Ignore pycache files
+__pycache__/*
+
+# imgui.ini
+imgui.ini

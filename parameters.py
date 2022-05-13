@@ -6,15 +6,34 @@ import math
 # Particles
 n_ptc = 1
 
-# Setup for the grid
-n_cellx, n_celly = 512, 512
-xmin, xmax, ymin, ymax = 0., 100., 0., 100.   # Spatial region
-pos_ori = [xmin, ymin]
-dx, dy = (xmax - xmin) / n_cellx, (ymax - ymin) / n_celly   # Spatial step
-inv_dx, inv_dy = 1. / dx, 1. / dy   # Inverse dx and dy
+# Dimensions
+DIM = 3
 
-# Time step
-dt = 0.99*dx*dy / math.sqrt(dx*dx+dy*dy) / constants.c
+# Setup for the grid
+if DIM == 3:
+    n_cellx, n_celly, n_cellz = 32, 32, 32
+    n_cells = (n_cellx, n_celly, n_cellz)
+    xmin, xmax, ymin, ymax, zmin, zmax = 0., 128., 0., 128., 0., 128.   # Spatial region
+    pos_ori = [xmin, ymin, zmin]
+    dx, dy, dz = (xmax - xmin) / n_cellx, (ymax - ymin) / n_celly, (zmax - zmin) / n_cellz   # Spatial step
+    inv_dx, inv_dy, inv_dz = 1. / dx, 1. / dy, 1. / dz   # Inverse dx and dy
+    dr = [dx, dy, dz]
+    dV = dx * dy * dz
+    inv_dr = [inv_dx, inv_dy, inv_dz]
+    # Time step
+    dt = 0.99 / math.sqrt(inv_dx * inv_dx + inv_dy * inv_dy + inv_dz * inv_dz) / constants.c
+else:
+    n_cellx, n_celly = 128, 128
+    n_cells = (n_cellx, n_celly)
+    xmin, xmax, ymin, ymax = 0., 128., 0., 128.  # Spatial region
+    pos_ori = [xmin, ymin, 0.]
+    dx, dy = (xmax - xmin) / n_cellx, (ymax - ymin) / n_celly  # Spatial step
+    inv_dx, inv_dy = 1. / dx, 1. / dy  # Inverse dx and dy
+    dr = [dx, dy]
+    dV = dx * dy
+    inv_dr = [inv_dx, inv_dy]
+    # Time step
+    dt = 0.99 / math.sqrt(inv_dx * inv_dx + inv_dy * inv_dy) / constants.c
 
 # Physical density of the particles
 n0 = 1.
