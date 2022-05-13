@@ -20,13 +20,27 @@ def push_bhalf(
             j_p = j + 1 if j != n_celly - 1 else 0
             k_p = k + 1 if k != n_cellz - 1 else 0
 
-            B_yee[Idx] = B_yee[Idx] - 0.5 * dt * c * curl(E_yee, i, i_p, j, j_p, k, k_p)
+            c_x = inv_dy * (E_yee[i, j_p, k][2] - E_yee[i, j, k][2]) - inv_dz * (
+                        E_yee[i, j, k_p][1] - E_yee[i, j, k][1])
+            c_y = inv_dz * (E_yee[i, j, k_p][0] - E_yee[i, j, k][0]) - inv_dx * (
+                        E_yee[i_p, j, k][2] - E_yee[i, j, k][2])
+            c_z = inv_dx * (E_yee[i_p, j, k][1] - E_yee[i, j, k][1]) - inv_dy * (
+                        E_yee[i, j_p, k][0] - E_yee[i, j, k][0])
+
+            B_yee[Idx] = B_yee[Idx] - 0.5 * dt * c * ti.Vector([c_x, c_y, c_z])
+            # B_yee[Idx] = B_yee[Idx] - 0.5 * dt * c * curl(E_yee, i, i_p, j, j_p, k, k_p)
         else:
             i, j = Idx[0], Idx[1]
             i_p = i + 1 if i != n_cellx - 1 else 0
             j_p = j + 1 if j != n_celly - 1 else 0
 
-            B_yee[Idx] = B_yee[Idx] - 0.5 * dt * c * curl_2d(E_yee, i, i_p, j, j_p)
+            # FIXME: for debug
+            c_x = inv_dy * (E_yee[i, j_p][2] - E_yee[i, j][2])
+            c_y = - inv_dx * (E_yee[i_p, j][2] - E_yee[i, j][2])
+            c_z = inv_dx * (E_yee[i_p, j][1] - E_yee[i, j][1]) - inv_dy * (E_yee[i, j_p][0] - E_yee[i, j][0])
+
+            B_yee[Idx] = B_yee[Idx] - 0.5 * dt * c * ti.Vector([c_x, c_y, c_z])
+            # B_yee[Idx] = B_yee[Idx] - 0.5 * dt * c * curl_2d(E_yee, i, i_p, j, j_p)
 
 
 @ti.kernel
@@ -45,13 +59,27 @@ def push_efield(
             j_m = j - 1 if j != 0 else n_celly - 1
             k_m = k - 1 if k != 0 else n_cellz - 1
 
-            E_yee[Idx] = E_yee[Idx] + dt * (c * curl(B_yee, i_m, i, j_m, j, k_m, k) - 4. * pi * J_yee[Idx])
+            c_x = inv_dy * (B_yee[i, j, k][2] - B_yee[i, j_m, k][2]) - inv_dz * (
+                        B_yee[i, j, k][1] - B_yee[i, j, k_m][1])
+            c_y = inv_dz * (B_yee[i, j, k][0] - B_yee[i, j, k_m][0]) - inv_dx * (
+                        B_yee[i, j, k][2] - B_yee[i_m, j, k][2])
+            c_z = inv_dx * (B_yee[i, j, k][1] - B_yee[i_m, j, k][1]) - inv_dy * (
+                        B_yee[i, j, k][0] - B_yee[i, j_m, k][0])
+
+            E_yee[Idx] = E_yee[Idx] + dt * (c * ti.Vector([c_x, c_y, c_z]) - 4. * pi * J_yee[Idx])
+            # E_yee[Idx] = E_yee[Idx] + dt * (c * curl(B_yee, i_m, i, j_m, j, k_m, k) - 4. * pi * J_yee[Idx])
         else:
             i, j = Idx[0], Idx[1]
             i_m = i - 1 if i != 0 else n_cellx - 1
             j_m = j - 1 if j != 0 else n_celly - 1
 
-            E_yee[Idx] = E_yee[Idx] + dt * (c * curl_2d(B_yee, i_m, i, j_m, j) - 4. * pi * J_yee[Idx])
+            # FIXME: only for debug
+            c_x = inv_dy * (B_yee[i, j][2] - B_yee[i, j_m][2])
+            c_y = - inv_dx * (B_yee[i, j][2] - B_yee[i_m, j][2])
+            c_z = inv_dx * (B_yee[i, j][1] - B_yee[i_m, j][1]) - inv_dy * (B_yee[i, j][0] - B_yee[i, j_m][0])
+
+            E_yee[Idx] = E_yee[Idx] + dt * (c * ti.Vector([c_x, c_y, c_z]) - 4. * pi * J_yee[Idx])
+            # E_yee[Idx] = E_yee[Idx] + dt * (c * curl_2d(B_yee, i_m, i, j_m, j) - 4. * pi * J_yee[Idx])
 
 
 @ti.kernel

@@ -61,33 +61,33 @@ def div_2d(f_field: ti.template(),
     return val
 
 
-@ti.func
-def curl(f_field: ti.template(),
-         i, i_p,
-         j, j_p,
-         k, k_p):
-    """
-    Calculate the curl at a specific position on yee lattice
-    """
-    c_x = inv_dy * (f_field[i, j_p, k][2] - f_field[i, j, k][2]) - inv_dz * (f_field[i, j, k_p][1] - f_field[i, j, k][1])
-    c_y = inv_dz * (f_field[i, j, k_p][0] - f_field[i, j, k][0]) - inv_dx * (f_field[i_p, j, k][2] - f_field[i, j, k][2])
-    c_z = inv_dx * (f_field[i_p, j, k][1] - f_field[i, j, k][1]) - inv_dy * (f_field[i, j_p, k][0] - f_field[i, j, k][0])
+# @ti.func
+# def curl(f_field: ti.template(),
+#          i, i_p,
+#          j, j_p,
+#          k, k_p):
+#     """
+#     Calculate the curl at a specific position on yee lattice
+#     """
+#     c_x = inv_dy * (f_field[i, j_p, k][2] - f_field[i, j, k][2]) - inv_dz * (f_field[i, j, k_p][1] - f_field[i, j, k][1])
+#     c_y = inv_dz * (f_field[i, j, k_p][0] - f_field[i, j, k][0]) - inv_dx * (f_field[i_p, j, k][2] - f_field[i, j, k][2])
+#     c_z = inv_dx * (f_field[i_p, j, k][1] - f_field[i, j, k][1]) - inv_dy * (f_field[i, j_p, k][0] - f_field[i, j, k][0])
+#
+#     return ti.Vector([c_x, c_y, c_z])
 
-    return ti.Vector([c_x, c_y, c_z])
 
-
-@ti.func
-def curl_2d(f_field: ti.template(),
-         i, i_p,
-         j, j_p):
-    """
-    Calculate the curl at a specific position on yee lattice
-    """
-    c_x = inv_dy * (f_field[i, j_p][2] - f_field[i, j][2])
-    c_y = - inv_dx * (f_field[i_p, j][2] - f_field[i, j][2])
-    c_z = inv_dx * (f_field[i_p, j][1] - f_field[i, j][1]) - inv_dy * (f_field[i, j_p][0] - f_field[i, j][0])
-
-    return ti.Vector([c_x, c_y, c_z])
+# @ti.func
+# def curl_2d(f_field: ti.template(),
+#          i, i_p,
+#          j, j_p):
+#     """
+#     Calculate the curl at a specific position on yee lattice
+#     """
+#     c_x = inv_dy * (f_field[i, j_p][2] - f_field[i, j][2])
+#     c_y = - inv_dx * (f_field[i_p, j][2] - f_field[i, j][2])
+#     c_z = inv_dx * (f_field[i_p, j][1] - f_field[i, j][1]) - inv_dy * (f_field[i, j_p][0] - f_field[i, j][0])
+#
+#     return ti.Vector([c_x, c_y, c_z])
 
 
 @ti.func

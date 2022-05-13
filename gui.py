@@ -9,9 +9,9 @@ def gui_init():
     canvas = window.get_canvas()
     scene = ti.ui.Scene()
     camera = ti.ui.make_camera()
-    camera.position(1.5, 1.5, 2)
+    camera.position(0.5, 0.5, 2)
     camera.lookat(0.5, 0.5, 0.5)
-    camera.fov(55)
+    camera.fov(45)
 
     return window, canvas, scene, camera
 
@@ -21,8 +21,8 @@ def gui_update(window, canvas, scene, camera,
     camera.track_user_inputs(window, movement_speed=0.03, hold_key=ti.ui.RMB)
     scene.set_camera(camera)
 
-    scene.ambient_light((0, 0, 0))
-    particles_radius_e = 0.05
+    scene.ambient_light((0.5, 0.5, 0.5))
+    particles_radius_e = 0.03
     particles_radius_p = 0.1
 
     # Electrons

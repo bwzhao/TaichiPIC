@@ -6,8 +6,11 @@ import math
 # Particles
 n_ptc = 1
 
+# Dimensions
+DIM = 3
+
 # Setup for the grid
-if constants.DIM == 3:
+if DIM == 3:
     n_cellx, n_celly, n_cellz = 32, 32, 32
     n_cells = (n_cellx, n_celly, n_cellz)
     xmin, xmax, ymin, ymax, zmin, zmax = 0., 128., 0., 128., 0., 128.   # Spatial region

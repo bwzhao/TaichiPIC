@@ -14,7 +14,7 @@ from helper_func import *
 from gui import *
 
 
-ti.init(arch=ti.cpu, debug=True, default_fp=ti.f32, default_ip=ti.i32)
+ti.init(arch=ti.vulkan, debug=True, default_fp=ti.f32, default_ip=ti.i32)
 
 ########################################################################################################################
 """
@@ -69,7 +69,7 @@ def initiate():
             pos_ptc = ti.Vector([xmin + ti.random() * (xmax - xmin) * 0.5,
                               ymin + ti.random() * (ymax - ymin) * 0.5,
                               zmin + ti.random() * (zmax - zmin) * 0.5])
-            u_ptc = [0., 0., 0.]
+            u_ptc = [0.9, 0., 0.]
             wght_ptc = n0 * (xmax - xmin) * (ymax - ymin) * (zmax - zmin) / n_ptc
 
             pos_e[idx_ptc] = pos_ptc
@@ -84,7 +84,7 @@ def initiate():
             pos_ptc = ti.Vector([xmin + ti.random() * (xmax - xmin) * 0.5,
                        ymin + ti.random() * (ymax - ymin) * 0.5,
                        0.])
-            u_ptc = [0.1, 0., 0.]
+            u_ptc = [0.9, 0., 0.]
             wght_ptc = n0 * (xmax - xmin) * (ymax - ymin) / n_ptc
 
             pos_e[idx_ptc] = pos_ptc
@@ -96,12 +96,12 @@ def initiate():
             wght_e[idx_ptc] = wght_ptc
             wght_p[idx_ptc] = wght_ptc
 
-        colors_e[idx_ptc] = ti.Vector([1., 0., 0., 1.])
-        colors_p[idx_ptc] = ti.Vector([0., 0., 1., 1.])
+        colors_e[idx_ptc] = ti.Vector([0., 0., 1., 1.])
+        colors_p[idx_ptc] = ti.Vector([1., 0., 0., 1.])
 
     # Fields:
     for Idx in ti.grouped(B_yee):
-        B_yee[Idx] = [0., 0., 1.]
+        B_yee[Idx] = [0., 0., 100.]
         E_yee[Idx] = [0., 0., 0.]
 
 
@@ -141,7 +141,7 @@ def update():
 
 
 if __name__ == '__main__':
-    # window, canvas, scene, camera = gui_init()
+    window, canvas, scene, camera = gui_init()
     initiate()
     eb_yee2grid(E_grid, E_yee, B_grid, B_yee)
     initial_push(-1., me, pos_e, u_e, E_grid, B_grid)
@@ -151,10 +151,10 @@ if __name__ == '__main__':
         update()
         if frame % 5 == 0:
             # Only for debug
-            print(E_yee[0, 0], B_yee[0, 0])
-            print(rho_grid[0, 0], J_grid[0, 0])
-            print(pos_e[0])
-            # gui_update(window, canvas, scene, camera, pos_e, pos_p, colors_e, colors_p)
+            # print(E_yee[0, 0], B_yee[0, 0])
+            # print(rho_grid[0, 0], J_grid[0, 0])
+            # print(pos_e[0])
+            gui_update(window, canvas, scene, camera, pos_e, pos_p, colors_e, colors_p)
 
 
 
