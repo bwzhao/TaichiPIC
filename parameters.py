@@ -43,7 +43,7 @@ else:
 
 # Particles
 # n_ptc = num_cells
-n_ptc = 128
+n_ptc = 16
 
 # Physical density of the particles
 n0 = 1.

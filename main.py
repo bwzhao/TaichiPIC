@@ -12,9 +12,10 @@ from field_func import *
 from rhoj_func import *
 from helper_func import *
 from gui import *
+from initialize import *
 
 
-ti.init(arch=ti.cuda, debug=True)
+ti.init(arch=ti.gpu, debug=True)
 
 ########################################################################################################################
 # Position
@@ -63,51 +64,7 @@ vertices = ti.Vector.field(3, float, 7)
 
 ########################################################################################################################
 # Initialization
-@ti.kernel
-def initiate():
-    """
-    Initialize the particles and fields
-    """
-    # Particle spatial dim
-    for idx_ptc in range(n_ptc):
-        if ti.static(DIM == 3):
-            pos_ptc = ti.Vector([xmin + ti.random() * (xmax - xmin),
-                                 ymin + ti.random() * (ymax - ymin),
-                                 zmin + ti.random() * (zmax - zmin)])
-            u_ptc = ti.Vector([ti.random(), ti.random(), ti.random()])
-            wght_ptc = n0 * (xmax - xmin) * (ymax - ymin) * (zmax - zmin) / n_ptc
 
-            pos_e[idx_ptc] = pos_ptc
-            pos_p[idx_ptc] = pos_ptc
-
-            u_e[idx_ptc] = u_ptc
-            u_p[idx_ptc] = -u_ptc
-
-            wght_e[idx_ptc] = wght_ptc
-            wght_p[idx_ptc] = wght_ptc
-        else:
-            pos_ptc = ti.Vector([xmin + ti.random() * (xmax - xmin) * 0.5,
-                       ymin + ti.random() * (ymax - ymin) * 0.5,
-                       0.])
-            u_ptc = [0.9, 0., 0.]
-            wght_ptc = n0 * (xmax - xmin) * (ymax - ymin) / n_ptc
-
-            pos_e[idx_ptc] = pos_ptc
-            pos_p[idx_ptc] = pos_ptc
-
-            u_e[idx_ptc] = u_ptc
-            u_p[idx_ptc] = u_ptc
-
-            wght_e[idx_ptc] = wght_ptc
-            wght_p[idx_ptc] = wght_ptc
-
-        colors_e[idx_ptc] = ti.Vector([1., 1., 1., 1.])
-        colors_p[idx_ptc] = ti.Vector([1., 1., 1., 1.])
-
-    # Fields:
-    for Idx in ti.grouped(B_yee):
-        B_yee[Idx] = [0., 0., 0.]
-        E_yee[Idx] = [0., 0., 0.]
 
 
 # Update
@@ -153,7 +110,7 @@ if __name__ == '__main__':
     else:
         gui = gui_init()
 
-    initiate()
+    initialize_random(pos_e, pos_p, u_e, u_p, wght_e, wght_p, B_yee, E_yee)
     eb_yee2grid(E_grid, E_yee, B_grid, B_yee)
     initial_push(-1., me, pos_e, u_e, E_grid, B_grid)
     initial_push(1., mp, pos_p, u_p, E_grid, B_grid)

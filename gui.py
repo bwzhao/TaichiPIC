@@ -14,16 +14,33 @@ def gui_init():
 
 
 def gui_update(gui, pos_e, pos_p):
-    gui.circles(T(pos_e.to_numpy() / (xmax - xmin)), radius=1.5, color=0x00FF00)
-    gui.circles(T(pos_p.to_numpy() / (xmax - xmin)), radius=1.5, color=0xff0000)
+    gui.triangles(a=T_field(np.array([[0., 0., 0.], [0., 0., 0.]])),
+                  b=T_field(np.array([[1., 0., 0.], [0., 1., 0.]])),
+                  c=T_field(np.array([[1., 1., 0.], [1., 1., 0.]])),
+                  color=0x0000ff)
+    gui.triangles(a=T_field(np.array([[0., 0., 0.], [0., 0., 0.]])),
+                  b=T_field(np.array([[1., 0., 0.], [0., 0., 1.]])),
+                  c=T_field(np.array([[1., 0., 1.], [1., 0., 1.]])),
+                  color=0xff0000)
+    gui.triangles(a=T_field(np.array([[0., 0., 0.], [0., 0., 0.]])),
+                  b=T_field(np.array([[0., 1., 0.], [0., 0., 1.]])),
+                  c=T_field(np.array([[0., 1., 1.], [0., 1., 1.]])),
+                  color=0x00ff00)
+
+    gui.circles(T_field(pos_e.to_numpy() / (xmax - xmin)), radius=2., color=0x000000)
+    gui.circles(T_field(pos_p.to_numpy() / (xmax - xmin)), radius=3., color=0xffffff)
+
+    gui.lines(begin=T_field(np.array([[1., 1., 0.], [1., 0., 1.], [0., 1., 1.]])),
+              end=T_field(np.array([[1., 1., 1.], [1., 1., 1.], [1., 1., 1.]])),
+              radius=2, color=0x068587)
 
     gui.show()
 
 
-def T(a):
-    phi, theta = np.radians(28), np.radians(32)
+def T_field(a):
+    phi, theta = np.radians(-28), np.radians(-32)
 
-    a = a - 0.5
+    a = (a - 0.5) * 0.5
     x, y, z = a[:, 0], a[:, 1], a[:, 2]
     c, s = np.cos(phi), np.sin(phi)
     C, S = np.cos(theta), np.sin(theta)
@@ -114,8 +131,8 @@ def ggui_update(window, canvas, scene, camera,
     show_field_p = ti.Vector.field(3, float, shape=n_ptc)
     show_field_e.from_numpy(pos_e.to_numpy() / (xmax - xmin))
     show_field_p.from_numpy(pos_p.to_numpy() / (xmax - xmin))
-    scene.particles(show_field_e, per_vertex_color=colors_e, radius=particles_radius_e)
-    scene.particles(show_field_p, per_vertex_color=colors_p, radius=particles_radius_p)
+    scene.particles(show_field_e, radius=particles_radius_e)
+    scene.particles(show_field_p, radius=particles_radius_p)
 
     scene.mesh(vertices,
                indices=indices_xy,
