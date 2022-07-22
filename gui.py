@@ -101,6 +101,7 @@ def ggui_init():
     Initialize GGUI in Taichi
     :return:
     """
+    
     window = ti.ui.Window("Taichi PIC Particles", res=(1024, 1024), vsync=True)
 
     canvas = window.get_canvas()
@@ -114,7 +115,7 @@ def ggui_init():
 
 
 def ggui_update(window, canvas, scene, camera,
-                pos_e, pos_p, colors_e, colors_p,
+                show_field_e, show_field_p, colors_e, colors_p,
                 vertices, indices_xy, indices_xz, indices_yz,
                 normals_xy, normals_xz, normals_yz):
     """
@@ -127,10 +128,14 @@ def ggui_update(window, canvas, scene, camera,
     particles_radius_e = 0.03
     particles_radius_p = 0.07
 
-    show_field_e = ti.Vector.field(3, float, shape=n_ptc)
-    show_field_p = ti.Vector.field(3, float, shape=n_ptc)
-    show_field_e.from_numpy(pos_e.to_numpy() / (xmax - xmin))
-    show_field_p.from_numpy(pos_p.to_numpy() / (xmax - xmin))
+    # Here 4 lines below are too slow, because it would fetch data from gpu to cpu,
+    # and then send data from cpu to gpu. And the gc of  field in python scope is 
+    # also a problem that lead your project run slowly.
+    
+    # show_field_e = ti.Vector.field(3, float, shape=n_ptc)
+    # show_field_p = ti.Vector.field(3, float, shape=n_ptc)
+    # show_field_e.from_numpy(pos_e.to_numpy() / (xmax - xmin))
+    # show_field_p.from_numpy(pos_p.to_numpy() / (xmax - xmin))
     scene.particles(show_field_e, radius=particles_radius_e)
     scene.particles(show_field_p, radius=particles_radius_p)
 

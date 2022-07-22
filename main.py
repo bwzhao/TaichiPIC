@@ -15,7 +15,7 @@ from gui import *
 from initialize import *
 
 
-ti.init(arch=ti.gpu, debug=True)
+ti.init(arch=ti.cuda, debug=True)
 
 ########################################################################################################################
 # Position
@@ -59,6 +59,9 @@ normals_xz = ti.Vector.field(3, float, 6)
 normals_yz = ti.Vector.field(3, float, 6)
 vertices = ti.Vector.field(3, float, 7)
 
+show_field_e = ti.Vector.field(3, float, shape=n_ptc)
+show_field_p = ti.Vector.field(3, float, shape=n_ptc)
+
 ########################################################################################################################
 
 
@@ -99,6 +102,9 @@ def update():
     #         iter_phi(E_yee, rho_grid, phi_old, phi_new)
     #     correct_efield(E_yee, phi_new)
     push_bhalf(B_yee, E_yee)
+    multi_by_number(pos_e, show_field_e)
+    multi_by_number(pos_p, show_field_p)
+    
 ########################################################################################################################
 
 
@@ -109,22 +115,26 @@ if __name__ == '__main__':
                             normals_xy, normals_xz, normals_yz)
     else:
         gui = gui_init()
-
+    
     initialize_random(pos_e, pos_p, u_e, u_p, wght_e, wght_p, B_yee, E_yee)
     eb_yee2grid(E_grid, E_yee, B_grid, B_yee)
     initial_push(-1., me, pos_e, u_e, E_grid, B_grid)
     initial_push(1., mp, pos_p, u_p, E_grid, B_grid)
 
     for frame in range(10000):
+        if ti.static(GGUI) and not window.running:
+            break
         if frame % 100 == 0:
             print("#Updates: %d" % frame)
         update()
+        frame += 1
         if ti.static(GGUI):
             ggui_update(window, canvas, scene, camera,
-                        pos_e, pos_p, colors_e, colors_p,
+                        show_field_e, show_field_p, colors_e, colors_p,
                         vertices, indices_xy, indices_xz, indices_yz,
                         normals_xy, normals_xz, normals_yz)
         else:
             gui_update(gui, pos_e, pos_p)
+
 
 

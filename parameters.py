@@ -11,7 +11,7 @@ import math
 DIM = 3
 
 # If use GGUI
-GGUI = False
+GGUI = True
 
 # Setup for the grid
 if DIM == 3:
