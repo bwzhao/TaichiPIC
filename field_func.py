@@ -9,6 +9,13 @@ import taichi as ti
 
 
 @ti.kernel
+def multi_by_number(pos : ti.template(), show_field : ti.template()):
+    scalar = 1 / (xmax - xmin)
+    for i in pos:
+        for j in ti.static(range(3)):
+            show_field[i][j] = pos[i][j] * scalar
+
+@ti.kernel
 def push_bhalf(
         B_yee: ti.template(),
         E_yee: ti.template()
